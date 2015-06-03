@@ -7,8 +7,15 @@
 //
 
 #import "AppDelegate.h"
+#import "MainViewController.h"
+//#import <GoogleMaps/GoogleMaps.h>
 
 @implementation AppDelegate
+
+@synthesize remDay = _remDay;
+@synthesize remMonth = _remMonth;
+@synthesize remYear = _remYear;
+@synthesize offSetTime = _offSetTime;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -16,34 +23,63 @@
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
     [self.window makeKeyAndVisible];
+    
+    //获取现在的时间
+    [self refreshNowTimeDate];
+    self.offSetTime = 8 * 60 * 60;//与格林尼治时间的偏移量
+    
+    MainViewController *mainCtrl = [[MainViewController alloc] init];
+    UINavigationController *navigationCtrl = [[UINavigationController alloc] initWithRootViewController:mainCtrl];
+    //修改默认navigationControl.title的颜色
+    [navigationCtrl.navigationBar setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIColor whiteColor], UITextAttributeTextColor,nil]];
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) {
+        //设置navigationBar的颜色
+        navigationCtrl.navigationBar.translucent = NO; //bar的颜色不变成模糊
+        navigationCtrl.navigationBar.barTintColor = [UIColor colorWithRed:29/255.0 green:37/255.0 blue:42/255.0 alpha:1.0f];
+    }else{
+        navigationCtrl.navigationBar.tintColor = [UIColor colorWithRed:29/255.0 green:37/255.0 blue:42/255.0 alpha:1.0f];
+    }
+    self.window.rootViewController = navigationCtrl;
     return YES;
 }
 
-- (void)applicationWillResignActive:(UIApplication *)application
+- (void)refreshNowTimeDate
 {
-    // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
-    // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
+    NSDate *currentDate = [NSDate date];
+    NSCalendar *currentCalendar = [NSCalendar currentCalendar];
+    
+    NSInteger unitFlag = NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit |NSHourCalendarUnit | NSMinuteCalendarUnit | NSSecondCalendarUnit;
+    NSDateComponents *dateCom = [currentCalendar components:unitFlag fromDate:currentDate];
+    self.remYear = [dateCom year];
+    self.remMonth = [dateCom month];
+    self.remDay = [dateCom day];
 }
 
-- (void)applicationDidEnterBackground:(UIApplication *)application
+-(NSInteger)daysOfAMonth:(NSInteger)nowtimeYear month:(NSInteger)nowtimeMonth
 {
-    // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
-    // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+    if (nowtimeMonth < 1) {
+        nowtimeMonth = 12;
+        nowtimeYear -=1;
+    }
+    
+    NSCalendar *currentCalendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSGregorianCalendar];
+    [currentCalendar setFirstWeekday:0]; //设置每周从周几开始
+    [currentCalendar setMinimumDaysInFirstWeek:7]; //设置每周最少的天数
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    //设置时区
+    [dateFormatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:[SHAREAPP offSetTime]]];
+    [dateFormatter setDateFormat:@"yyyyMMdd"];
+    NSDate *firstDayInAMonth = [[NSDate alloc] init];
+    //每月一号的时间
+    firstDayInAMonth = [dateFormatter dateFromString:[NSString stringWithFormat:@"%ld%.2ld01",(long)[SHAREAPP remYear],(long)[SHAREAPP remMonth]]];
+    NSRange dateRange = [currentCalendar rangeOfUnit:NSDayCalendarUnit inUnit:NSMonthCalendarUnit forDate:firstDayInAMonth]; //时间range(每月的天数)
+    return dateRange.length;
 }
 
-- (void)applicationWillEnterForeground:(UIApplication *)application
+//禁止横屏
+- (NSUInteger)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window
 {
-    // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-}
-
-- (void)applicationDidBecomeActive:(UIApplication *)application
-{
-    // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-}
-
-- (void)applicationWillTerminate:(UIApplication *)application
-{
-    // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    return UIInterfaceOrientationMaskPortrait;
 }
 
 @end

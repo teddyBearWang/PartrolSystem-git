@@ -12,3 +12,11 @@
     #import <UIKit/UIKit.h>
     #import <Foundation/Foundation.h>
 #endif
+
+//web服务网址
+#define WebServiceUrl @"http://115.236.2.245:801/SKXCWebSer/Data_Skxc.ashx"
+
+#define ScreenHeight [UIScreen mainScreen].bounds.size.height
+#define ScreenWidth  [UIScreen mainScreen].bounds.size.width
+//#define ScreenHeight 568
+//#define ScreenWidth  320
